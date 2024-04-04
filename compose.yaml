@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        - DEV=true
+    ports:
+      - 8000:8000
+    volumes:
+      - ./app:/app
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  celery:
+    build:
+      context: .
+    volumes:
+      - ./app:/app
+    # celery worker server 실행: celery –A tasks worker –loglevel=INFO
+    # -A, --app: application을 의미하며, tasks 모듈을 읽어서 해당 모듈의 application을 실행한다는 뜻
+    # worker: worker 인스턴스를 실행한다 # -l : loglevel
+    command: celery --app=worker worker -l INFO 
+    depends_on:
+      - app
+      - redis
